@@ -1,16 +1,39 @@
-// 文章管理--发表文章页面
-// 功能 1.渲染文章类别  2.富文本插件 3.裁剪插件  4.发布文章
+// 编辑文件页面专属
+// 功能 1.根据渲染文章类别  2.富文本插件 3.裁剪插件  4.发布文章
 $(function() {
     const { form } = layui
+    //接收列表页传来的参数
+    location.search
+    const arr = location.search.slice(1).split('=')
+    const id = arr[1]
+        // console.log(id);
+
+    //根据 id 获取文章详情
+    function getArtDetail(id) {
+        axios.get('/my/article/' + id).then(res => {
+            if (res.status !== 0) return layer.msg('获取失败!')
+
+            form.val('edit-form', res.data) //使用插件自带的form功能渲染表单
+            initEditor() //初始化富文本
+            $image.cropper('replace', 'http://api-breakingnews-web.itheima.net' + res.data.cover_img) //替换图片(这网址路径哪来的)⭐
+        })
+
+    }
+    // getArtDetail()
+
+
+
+
     // 1.渲染文章类别
     function getCateList() {
         axios.get('/my/article/cates').then(res => {
+            // console.log(res);
             if (res.status !== 0) return layer.msg('获取失败!')
             res.data.forEach(item => {
                 $('#cate-sel').append(`<option value="${item.Id}">${item.name}</option>`)
             });
-            // 坑:动态创建的表单元素需要手动更新表单⭐
             form.render('select') //刷新select选择框渲染
+            getArtDetail(id) //注意函数调用位置
         })
     }
     getCateList()

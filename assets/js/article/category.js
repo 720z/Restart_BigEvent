@@ -5,7 +5,7 @@ $(function() {
     // 1.模版引擎渲染分类列表
     function getList() {
         axios.get('/my/article/cates').then(res => {
-            console.log(res);
+            // console.log(res);
             if (res.status !== 0) return layer.msg('获取文章列表失败!')
 
             //定义一个模版引擎

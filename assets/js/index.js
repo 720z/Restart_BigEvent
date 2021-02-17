@@ -3,7 +3,6 @@
 // 1.封装函数 获取并渲染头像用户名
 function getUserInfo() {
     axios.get('/my/userinfo').then(res => {
-        console.log(res);
         if (res.status !== 0) return layer.msg('获取失败!')
 
         //渲染头像与昵称
