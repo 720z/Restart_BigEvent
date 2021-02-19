@@ -10,11 +10,11 @@ $(function() {
 
     //根据 id 获取文章详情
     function getArtDetail(id) {
-        axios.get('/my/article/' + id).then(res => {
+        axios.get(`/my/article/${id}`).then(res => {
             if (res.status !== 0) return layer.msg('获取失败!')
 
             form.val('edit-form', res.data) //使用插件自带的form功能渲染表单
-            initEditor() //初始化富文本
+            initEditor() //修复了文章内容不显示的问题
             $image.cropper('replace', 'http://api-breakingnews-web.itheima.net' + res.data.cover_img) //替换图片(这网址路径哪来的)⭐
         })
 
@@ -23,21 +23,22 @@ $(function() {
 
 
     // 1.渲染文章类别
+    getCateList()
+
     function getCateList() {
         axios.get('/my/article/cates').then(res => {
             // console.log(res);
             if (res.status !== 0) return layer.msg('获取失败!')
             res.data.forEach(item => {
                 $('#cate-sel').append(`<option value="${item.Id}">${item.name}</option>`)
-            });
+            })
             form.render('select') //刷新select选择框渲染
             getArtDetail(id) //注意函数调用位置
         })
     }
-    getCateList()
 
-    // 2.初始化富文本编辑器⭐
-    initEditor()
+    // 2.初始化富文本编辑器(此处取消)⭐
+    // initEditor()
 
     // 3.裁剪插件
     const $image = $('#image'); // 初始化裁剪插件
@@ -47,7 +48,8 @@ $(function() {
             // console.log(event.detail.x);
             // console.log(event.detail.y);
         },
-        preview: '.img-preview' // 指定预览区域
+        preview: '.img-preview', // 指定预览区域
+        viewMode: 3
     });
 
     // 点击上传 = 点击选择文件
@@ -67,23 +69,21 @@ $(function() {
     let state
     $('.last-row button').click(function() {
         state = $(this).data('state')
-            // console.log(state);
+        console.log(state);
     })
 
     $('.publish-form').submit(function(e) { // 两个按钮都有发布功能，给表单绑
         e.preventDefault()
-
-        // 准备发送axios请求，需要的请求参数：title、cate_id、content、cover_img、state
-        const fd = new FormData(this) // 已经拿到title、cate_id、content
-        fd.append('state', state) // 添加state
-            // console.log(fd.get('state'));
 
         // 添加cover_img  此处可查cropper文档(查了也看不懂)⭐
         $image.cropper('getCroppedCanvas', {
             width: 150,
             height: 150
         }).toBlob(blob => {
-            // console.log(blob); //二进制图片数据
+
+            // 准备发送axios请求，需要的请求参数：title、cate_id、content、cover_img、state
+            const fd = new FormData(this) // 已经拿到title、cate_id、content
+            fd.append('state', state) // 添加state
             fd.append('cover_img', blob)
             publishArticle(fd) //注意函数调用位置⭐
         })
@@ -91,15 +91,14 @@ $(function() {
 
     // 万事俱备，发送请求(为了美观，封装函数)
     function publishArticle(fd) {
-        axios.post('/my/article/add', fd).then(res => {
+        fd.append('Id', id)
+        axios.post('/my/article/edit', fd).then(res => {
             console.log(res);
             if (res.status !== 0) return layer.msg('发表失败!')
 
             layer.msg(state == '草稿' ? '已存为草稿!' : '发表成功!')
-            setTimeout(() => { //延迟跳转
-                location.href = './list.html' //跳转至 "文章列表"
-                window.parent.$('.layui-this').prev().find('a').click() //优化左侧导航栏高亮
-            }, 1e3);
+            location.href = './list.html' //跳转至 "文章列表"
+            window.parent.$('.layui-this').prev().find('a').click() //优化左侧导航栏高亮
         })
     }
 
